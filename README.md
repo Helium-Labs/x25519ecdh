@@ -16,7 +16,7 @@ Provides a simple API for encrypting and decrypting messages between two parties
 Install via npm:
 
 ```bash
-npm install @gradian/X25519ECDHMessageChannel
+npm install @gradian/x25519ecdh
 ```
 
 ## Usage
