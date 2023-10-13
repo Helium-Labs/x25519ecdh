@@ -1,6 +1,6 @@
 {
   "name": "@gradian/x25519ecdh",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A simple API for encrypting and decrypting messages between two parties with X25519 ECDH, making use of best practices and highly trusted crypto implementations",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
