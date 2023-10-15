@@ -6,17 +6,22 @@ import { ECDHPair, EncryptedMessage, EncryptedPayload, UnencryptedPayload, X2551
  */
 export default class X25519ECDHMessageChannel {
     private myKeyPair: X25519Pair;
+    private theirPublicKey: Uint8Array;
     /**
      * Generate a new X25519ECDHMessageChannel: a simple API for encrypting and decrypting messages between two parties with X25519 ECDH.
+     * @param {Uint8Array} theirPublicKey - the public key of the other party
      * @param {X25519Pair} myKeyPair - optional X25519 key pair. If not provided, a key pair will be generated.
      * @returns {X25519ECDHMessageChannel} X25519ECDHMessageChannel
      */
-    constructor(myKeyPair?: X25519Pair) {
-        if (myKeyPair) {
-            this.myKeyPair = myKeyPair;
-        } else {
-            this.myKeyPair = X25519ECDHMessageChannel.generateX25KeyPair();
+    constructor(theirPublicKey: Uint8Array, myKeyPair: X25519Pair) {
+        if (!theirPublicKey) {
+            throw new Error("theirPublicKey must be provided");
         }
+        if (!myKeyPair) {
+            throw new Error("myKeyPair must be provided");
+        }
+        this.myKeyPair = myKeyPair;
+        this.theirPublicKey = theirPublicKey;
     }
 
     /**
@@ -24,9 +29,10 @@ export default class X25519ECDHMessageChannel {
      * @param {string} theirPub
      * @returns {ECDHPair} ECDHPair
      */
-    private generateSharedSecret(theirPub: Uint8Array): ECDHPair {
+    private generateSharedSecret(): ECDHPair {
         const myPriv = this.myKeyPair.priv;
         const myPub = this.myKeyPair.pub;
+        const theirPub = this.theirPublicKey;
         const sharedSecret = x25519.getSharedSecret(myPriv, theirPub);
         return { myPub, sharedSecret };
     }
@@ -39,16 +45,6 @@ export default class X25519ECDHMessageChannel {
      */
     private importSecretKey(rawKey: ArrayBuffer): Promise<CryptoKey> {
         return crypto.subtle.importKey("raw", rawKey, "AES-GCM", true, ["encrypt", "decrypt"]);
-    }
-
-    /**
-     * Generate X25519 key pair, in the event the invoking client has not provided a key pair.
-     * @returns {X25519Pair} X25519Pair
-     */
-    private static generateX25KeyPair(): X25519Pair {
-        const priv = x25519.utils.randomPrivateKey();
-        const pub = x25519.getPublicKey(priv);
-        return { pub, priv };
     }
 
     /**
@@ -74,17 +70,15 @@ export default class X25519ECDHMessageChannel {
      * @param {UnencryptedPayload} unencryptedPayload - unencrypted payload to encrypt
      * @returns {Promise<EncryptedPayload>} EncryptedPayload
      */
-    async encrypt(unencryptedPayload: UnencryptedPayload): Promise<EncryptedPayload> {
+    async encrypt(unencryptedData: any): Promise<EncryptedPayload> {
         // Derive ECDHSharedSecret
-        const theirPub = unencryptedPayload.senderPublicKey;
-        const echdPair: ECDHPair = this.generateSharedSecret(theirPub);
-        const json = unencryptedPayload.unencryptedData;
-        const jsonString: string = JSON.stringify(json);
+        const echdPair: ECDHPair = this.generateSharedSecret();
+        const jsonString: string = JSON.stringify(unencryptedData);
         const cipherTextIVJSON: EncryptedMessage = await this.encryptMessage(jsonString, echdPair.sharedSecret);
         const encryptedPayload: EncryptedPayload = {
             iv: cipherTextIVJSON.iv,
             encryptedData: cipherTextIVJSON.cipherText,
-            senderPublicKey: unencryptedPayload.senderPublicKey,
+            senderPublicKey: this.getMyPub(),
         };
         return encryptedPayload;
     }
@@ -112,7 +106,7 @@ export default class X25519ECDHMessageChannel {
      */
     async decrypt(encryptedPayload: EncryptedPayload): Promise<UnencryptedPayload> {
         // Derive ECDHSharedSecret
-        const echdPair: ECDHPair = this.generateSharedSecret(encryptedPayload.senderPublicKey);
+        const echdPair: ECDHPair = this.generateSharedSecret();
         const cipherText: ArrayBuffer = encryptedPayload.encryptedData;
         const iv: Uint8Array = encryptedPayload.iv;
         const decrypted: string = await this.decryptMessage(cipherText, iv, echdPair.sharedSecret);

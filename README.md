@@ -22,42 +22,37 @@ npm install @gradian/x25519ecdh
 ## Usage
 
 ```javascript
+import X25519ECDHMessageChannel from "@gradian/x25519ecdh"
+import { generateX25519KeyPair } from "@gradian/x25519ecdh/util"
+
+// Step 0: Exchange public keys (simulate a network transfer or other method of exchange)
+const aliceKeys = generateX25519KeyPair();
+const bobKeys = generateX25519KeyPair();
+
 // Step 1: Two parties generate their own key pairs
-const aliceChannel = new X25519ECDHMessageChannel(); // Alice's message channel with her key pair
-const bobChannel = new X25519ECDHMessageChannel(); // Bob's message channel with his key pair
+const aliceChannel = new X25519ECDHMessageChannel(bobKeys.pub, aliceKeys); // Alice's message channel with her key pair
+const bobChannel = new X25519ECDHMessageChannel(aliceKeys.pub, bobKeys); // Bob's message channel with his key pair
 
-// Step 2: Exchange public keys (simulate a network transfer or other method of exchange)
-const alicePubKey = aliceChannel.getMyPub();
-const bobPubKey = bobChannel.getMyPub();
-
-// Step 3: Alice sends an encrypted message to Bob
-const aliceMessage = {
-    unencryptedData: {
-        text: "Hello, Bob!"
-    },
-    senderPublicKey: alicePubKey
-};
-
-const encryptedPayloadFromAlice = await aliceChannel.encrypt(aliceMessage);
+// Step 2: Alice sends an encrypted message to Bob
+const encryptedPayloadFromAlice = await aliceChannel.encrypt("Hello, Bob!");
 
 // Bob receives the encrypted payload from Alice and decrypts it
 const decryptedPayloadByBob = await bobChannel.decrypt(encryptedPayloadFromAlice);
-console.log(`Bob decrypted: ${decryptedPayloadByBob.unencryptedData.text}`);
+console.log(`Bob decrypted: ${decryptedPayloadByBob.unencryptedData}`);
 
-// Step 4: Bob sends a reply back to Alice
-const bobMessage = {
-    unencryptedData: {
-        text: "Hi, Alice!"
-    },
-    senderPublicKey: bobPubKey
-};
-
-const encryptedPayloadFromBob = await bobChannel.encrypt(bobMessage);
+// Step 3: Bob sends a reply back to Alice
+const encryptedPayloadFromBob = await bobChannel.encrypt("Hi, Alice!");
 
 // Alice receives the encrypted payload from Bob and decrypts it
 const decryptedPayloadByAlice = await aliceChannel.decrypt(encryptedPayloadFromBob);
-console.log(`Alice decrypted: ${decryptedPayloadByAlice.unencryptedData.text}`);
+console.log(`Alice decrypted: ${decryptedPayloadByAlice.unencryptedData}`);
 ```
+
+## Todo
+
+Currently there's no way to verify who sent a given message, so a good todo is:
+
+- Add message sender authentication with DSA
 
 ## Building
 
