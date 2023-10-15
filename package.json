@@ -22,6 +22,7 @@
     }
   },
   "dependencies": {
+    "@gradian/x25519ecdh": "^1.0.4",
     "@noble/curves": "^1.2.0"
   },
   "devDependencies": {

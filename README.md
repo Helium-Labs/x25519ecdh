@@ -22,8 +22,7 @@ npm install @gradian/x25519ecdh
 ## Usage
 
 ```javascript
-import X25519ECDHMessageChannel from "@gradian/x25519ecdh"
-import { generateX25519KeyPair } from "@gradian/x25519ecdh/util"
+import { generateX25519KeyPair, X25519ECDHMessageChannel } from "@gradian/x25519ecdh"
 
 // Step 0: Exchange public keys (simulate a network transfer or other method of exchange)
 const aliceKeys = generateX25519KeyPair();
