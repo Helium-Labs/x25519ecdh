@@ -28,7 +28,7 @@ import { generateX25519KeyPair, X25519ECDHMessageChannel } from "@gradian/x25519
 const aliceKeys = generateX25519KeyPair();
 const bobKeys = generateX25519KeyPair();
 
-// Step 1: Two parties generate their own key pairs
+// Step 1: Each party creates their own message channel instance
 const aliceChannel = new X25519ECDHMessageChannel(bobKeys.pub, aliceKeys); // Alice's message channel with her key pair
 const bobChannel = new X25519ECDHMessageChannel(aliceKeys.pub, bobKeys); // Bob's message channel with his key pair
 
